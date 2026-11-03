@@ -1,0 +1,205 @@
+使用者：
+在 @gamebot.ipynb 中新增一個 code cell，完成底下的程式。
+basex 以及 basey 是左上角寶石中心點的位置，畫面中共有 8x8 顆寶石。
+每顆寶石的間距在 gap 中。
+寫一個函式，接受一個 row（用 r 代表）、一個 column（用 c 代表），回傳 (r, c) 所代表寶石的位置。
+
+助理：
+已在 `gamebot.ipynb` 新增 `gem_position(r, c)`，回傳寶石中心座標 `(x, y)`：
+
+```python
+def gem_position(r, c):
+    """回傳第 r 列、第 c 欄寶石的中心座標（r、c 從 0 開始）。"""
+    return (basex + c * gap, basey + r * gap)
+```
+
+其中 `r`、`c` 從 0 開始。已確認 notebook JSON 與新增程式碼語法有效。
+
+使用者：
+給我程式碼
+
+助理：
+```python
+def gem_position(r, c):
+    """回傳第 r 列、第 c 欄寶石的中心座標（r、c 從 0 開始）。"""
+    return (basex + c * gap, basey + r * gap)
+```
+
+使用者：
+在 @gamebot.ipynb 中新增一個 code cell，完成底下的函式。
+函式名稱 get_gem_color，接受一個 r 及 c，還有畫面截圖 im。
+使用 pyautogui 取得 (r,c) 位置寶石的顏色，並回傳。
+
+助理：
+已在 `gamebot.ipynb` 新增 code cell，函式會依 `(r, c)` 找到寶石中心，並從截圖 `im` 回傳該位置的顏色：
+
+```python
+def get_gem_color(r, c, im):
+    x, y = gem_position(r, c)
+    return im.getpixel((x, y))
+```
+
+使用者：
+在 @gamebot.ipynb 中新增一個 code cell，完成 can_move_left 函式。
+can_move 接受 r、c 以及 im。需求如下：
+我正在寫一個 match 3 的 game bot。
+畫面中有 8x8 個寶石。
+每顆寶石有 4 個可以移動的方向：往上、下、左以及右。
+請判斷 (r,c) 是否可往左移動，若可以回傳 True，否則回傳 False。
+im 是螢幕截圖，可以取得寶石的中心點的 color。
+
+助理：
+已在 `gamebot.ipynb` 新增 `can_move_left(r, c, im)`，會判斷往左交換後是否形成三連：
+
+```python
+def can_move_left(r, c, im):
+    """判斷第 r 列、第 c 欄的寶石往左交換後是否會形成三連。"""
+    if not (0 <= r < 8 and 1 <= c < 8):
+        return False
+
+    p1 = (r, c)
+    p2 = (r, c - 1)
+    color1 = get_gem_color(r, c, im)
+    color2 = get_gem_color(r, c - 1, im)
+
+    def color_after_swap(row, col):
+        if (row, col) == p1:
+            return color2
+        if (row, col) == p2:
+            return color1
+        return get_gem_color(row, col, im)
+
+    for row, col in (p1, p2):
+        color = color_after_swap(row, col)
+        for dr, dc in ((0, 1), (1, 0)):
+            count = 1
+            for direction in (-1, 1):
+                nr, nc = row + dr * direction, col + dc * direction
+                while 0 <= nr < 8 and 0 <= nc < 8 and color_after_swap(nr, nc) == color:
+                    count += 1
+                    nr += dr * direction
+                    nc += dc * direction
+            if count >= 3:
+                return True
+
+    return False
+```
+
+使用者：
+給我程式碼
+
+助理：
+```python
+def can_move_left(r, c, im):
+    """判斷第 r 列、第 c 欄的寶石往左交換後是否會形成三連。"""
+    if not (0 <= r < 8 and 1 <= c < 8):
+        return False
+
+    p1 = (r, c)
+    p2 = (r, c - 1)
+    color1 = get_gem_color(r, c, im)
+    color2 = get_gem_color(r, c - 1, im)
+
+    def color_after_swap(row, col):
+        if (row, col) == p1:
+            return color2
+        if (row, col) == p2:
+            return color1
+        return get_gem_color(row, col, im)
+
+    for row, col in (p1, p2):
+        color = color_after_swap(row, col)
+        for dr, dc in ((0, 1), (1, 0)):
+            count = 1
+            for direction in (-1, 1):
+                nr, nc = row + dr * direction, col + dc * direction
+                while 0 <= nr < 8 and 0 <= nc < 8 and color_after_swap(nr, nc) == color:
+                    count += 1
+                    nr += dr * direction
+                    nc += dc * direction
+            if count >= 3:
+                return True
+
+    return False
+```
+
+使用者：
+在 @gamebot.ipynb 中新增一個 code cell，依 can_move_left 規格，完成 can_move_right、can_move_up、can_move_down，並回傳。
+
+使用者：
+給我程式碼
+
+助理：
+```python
+def _can_move_in_direction(r, c, im, dr, dc):
+    """判斷寶石與指定方向的相鄰寶石交換後是否會形成三連。"""
+    nr, nc = r + dr, c + dc
+    if not (0 <= r < 8 and 0 <= c < 8 and 0 <= nr < 8 and 0 <= nc < 8):
+        return False
+
+    p1, p2 = (r, c), (nr, nc)
+    color1 = get_gem_color(r, c, im)
+    color2 = get_gem_color(nr, nc, im)
+
+    def color_after_swap(row, col):
+        if (row, col) == p1:
+            return color2
+        if (row, col) == p2:
+            return color1
+        return get_gem_color(row, col, im)
+
+    for row, col in (p1, p2):
+        color = color_after_swap(row, col)
+        for match_dr, match_dc in ((0, 1), (1, 0)):
+            count = 1
+            for direction in (-1, 1):
+                rr = row + match_dr * direction
+                cc = col + match_dc * direction
+                while (
+                    0 <= rr < 8
+                    and 0 <= cc < 8
+                    and color_after_swap(rr, cc) == color
+                ):
+                    count += 1
+                    rr += match_dr * direction
+                    cc += match_dc * direction
+            if count >= 3:
+                return True
+
+    return False
+
+
+def can_move_right(r, c, im):
+    return _can_move_in_direction(r, c, im, 0, 1)
+
+
+def can_move_up(r, c, im):
+    return _can_move_in_direction(r, c, im, -1, 0)
+
+
+def can_move_down(r, c, im):
+    return _can_move_in_direction(r, c, im, 1, 0)
+```
+
+使用者：
+在 @gamebot.ipynb 中新增一個 code cell，完成底下工作：
+
+先存下目前時間。
+
+進入無窮迴圈。
+
+對於畫面中的每顆寶石 (r,c)：
+
+判斷是否 can_move_right、can_move_up、can_move_down、can_move_left。
+
+若其中一個可以，就將寶石 (r,c) 移動到對應方向。
+
+再截圖。
+
+若超過一分鐘，跳出無窮迴圈。
+
+助理：
+已在 `gamebot.ipynb` 新增 code cell：記錄開始時間後掃描 8×8 寶石，依序嘗試右、上、下、左移動；找到可移動的寶石時會拖曳交換並重新截圖，超過一分鐘便停止。已確認新增 cell 的語法有效。
+
+使用者：
+請把到目前為止，我與你溝通的所有訊息都存在一個 bot_message.txt
